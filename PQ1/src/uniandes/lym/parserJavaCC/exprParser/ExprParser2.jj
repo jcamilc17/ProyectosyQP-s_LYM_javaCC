@@ -1,0 +1,199 @@
+	/**
+ * JavaCC template file created by SF JavaCC plugin 1.5.17+ wizard for JavaCC 1.5.0+
+*/
+
+
+  
+options {
+  IGNORE_CASE = true;
+  STATIC = false;
+}
+
+PARSER_BEGIN(ExprParser)
+package uniandes.lym.parserJavaCC.exprParser;
+import java.util.*;
+ 
+
+public class ExprParser
+{
+
+
+
+
+
+}
+
+
+
+
+PARSER_END(ExprParser)
+
+SKIP :
+{
+  " "
+| "\r" 
+| "\t"
+| "\n"
+}
+
+
+
+
+TOKEN :
+{
+  <INT : (< DIGIT >)+ >
+|  < HEXA: "#"(< DIGIT >)+ >
+| < #DIGIT : [ "0"-"9" ] >
+| < #LETTER : [ "A"-"Z" ] >
+|  < END: "end" >
+| < WRITE: "write" >
+| < VAR :  <LETTER > (< LETTER >| < DIGIT >)* >
+
+
+}
+int one_line() :
+{int pos=0;}
+{
+  
+
+
+  
+// reads assignments and write statements. Should end with "end"
+//  for example:
+//      var1 = 1;
+//     y = -var1 + 8;
+//     write var1;
+//     write y;
+//    end
+//  ";" is part of the instruction or write statement
+
+
+
+      ( variable()"=" exp() ";" 
+      |
+      <WRITE>  variable() ";" // used to print variable values
+    )*
+  < END > { 
+    return 0;
+  }
+    
+}
+
+void exp() :
+{
+  }
+{
+// Parses  E -> E + T
+//         E -> E - T
+//         E -> T
+//   in EBNF:  E -> T {+ T   | - T }
+  
+ term() ( "+"term() 
+          | "-" term()  
+         )*
+}
+void term() :
+{
+}
+{
+// Parses  T -> T * F
+//         T -> T / F
+//         T -> F
+//   in EBNF:  T -> F {* F   | /  F }
+  
+ fact() ( "*"  fact()    
+ | "/" fact()
+  
+
+ )*
+}
+void fact() :
+{
+// Parses  F -> B
+//         F -> -F
+//         B -> num
+//         B -> '(' E ')'
+//         B -> var
+//   in EBNF:  F -> -F  |  (var |num |'(' E ')')
+//   we don't remove right recursion
+
+
+ 
+ 
+}
+{
+
+   "-"  fact() 
+   |  variable() 
+   | num() 
+   |  "("exp() ")"
+                             
+}
+
+
+int num() throws Error:
+{	
+	int total=-9999;
+	Token token;
+}
+
+{
+	(token=<INT>)
+
+	{ 
+		try {
+			total = Integer.valueOf(token.image);
+		} 
+		catch (NumberFormatException ee) 
+		{
+			throw new Error("Number too large: "+token.image);
+		}
+		return total;
+     }
+     
+       
+}
+
+
+String variable() throws Error:
+{	
+	Token token;
+}
+
+{
+	(token=<VAR>)
+
+	  
+{
+  return token.image;
+         
+}   
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

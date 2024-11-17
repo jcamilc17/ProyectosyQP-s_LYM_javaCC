@@ -1,0 +1,101 @@
+/**
+ * JavaCC template file created by SF JavaCC plugin 1.5.17+ wizard for JavaCC 1.5.0+
+*/
+
+
+
+options
+{
+  static = false;
+}
+
+PARSER_BEGIN(NuevoParserPost)
+package uniandes.lym.parserJavaCC.newParserPost;
+
+public class NuevoParserPost
+{
+
+
+
+  
+}
+
+PARSER_END(NuevoParserPost)
+
+SKIP :
+{
+  " "
+| "\r" 
+| "\t"
+| "\n"
+}
+
+TOKEN : // OPERATORS 
+{
+  < PLUS : "+" >
+| < MINUS : "-" >
+| < MULTIPLY : "*" >
+| < DIVIDE : "/" >
+}
+
+TOKEN :
+{
+  <INT : (< DIGIT >)+ >
+| < #DIGIT : [ "0"-"9" ] >
+}
+int one_line() :
+{int r=0;}
+{
+     r=exp()  ";" 
+  {     return r;
+  }
+  
+}
+
+int exp() :
+{
+int t,t1;
+  }
+{
+// Parses:  E -> num
+//         E -> E E +
+//         E -> E E -
+//         E -> E E /
+//         E -> E E *
+//   in EBNF:  E -> num { (E + | E - | E * | E /) }
+//   in EBNF:  E -> num { E( + |  - |  * |  /) }
+  
+   t1=num() (  t = exp() (
+    <PLUS> {t1 = t1 + t;}
+    |  <MINUS> {t1= t1 - t;}
+    | <MULTIPLY> {t1= t1 *t;}
+    | <DIVIDE>  {t1 = t1 / t;} 
+)  )*
+  {   return t1;
+  }
+}
+
+
+int num() throws Error:
+{	
+	int total=1;
+	Token token;
+}
+
+{
+	(token=<INT>)
+
+	{ 
+		try {
+			total = Integer.parseInt(token.image);
+		} 
+		catch (NumberFormatException ee) 
+		{
+			// Dada la forma de <ENTERO>, sabemos que solo puede tener digitos 
+			throw new Error("Numero demasiado grande"+token.image);
+		}
+		return total;
+     }
+     
+     
+}

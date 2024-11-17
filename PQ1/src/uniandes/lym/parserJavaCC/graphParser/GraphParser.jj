@@ -1,0 +1,129 @@
+//
+//  Implements JavaCC parser for graph descriptions
+//
+
+
+
+
+
+options {
+  IGNORE_CASE = true;
+  STATIC = false;
+}
+PARSER_BEGIN(GraphParser)
+package uniandes.lym.parserJavaCC.graphParser;
+
+import java.util.*;
+ 
+public class GraphParser {
+ArrayList names = new  ArrayList <Integer>();
+} 
+ 
+PARSER_END(GraphParser)
+
+SKIP :
+{
+ 	" " | "\r" | "\t" | "\n"
+}
+TOKEN : /* OPERATORS */
+{
+    <GRAPH: "graph">
+ |   < NODES: "nodes" >
+  |  < ARCS: "arcs" >
+    
+    
+}
+
+TOKEN :
+{
+     < #DIGIT: "0" | "1" | "2"| "3" | "4" | "5" |  "6" | "7" | "8" |"9" >
+|   < #LETTER: ["A"-"Z"] >
+|    < NAME: ( <LETTER>  ( <LETTER > | < DIGIT >)* )>
+|    < NUMBER: (  < DIGIT >)+ >
+
+
+}
+
+
+
+void graph():
+{}
+{
+< GRAPH > "(" < NAME > ","  <NODES > "(" vert() ("," vert())* ")" ";" < ARCS> "(" arc() ("," arc())*   ")" ")"
+}
+
+
+void vert():
+{Object v;}
+{
+    v=id() (":"  prop()  ("&" prop())*)?
+{
+names.add(v);
+}
+}
+
+void arc():
+{}
+{
+     "(" d_id()  "," d_id()  ("," value() )? ")"
+   
+}
+
+
+Object id():
+{Object o;}
+{
+(o = name() |  o=num()) { return o; }
+}
+
+void d_id() throws Error:
+{Object o;}
+{
+(o = name() |  o=num()) { if (!names.contains(o)) throw new  Error("Node "+ o.toString() + " is not defined"); }
+}
+
+void value():
+{}
+{
+["-"] <NUMBER >
+}
+
+
+void prop():
+{}
+{
+   "<" <NAME > "," value() ">" 
+}
+
+
+Integer num() throws Error:
+{	
+	int total=-9999;
+	Token token;
+}
+
+{
+	(token=<NUMBER>)
+
+	{ 
+		try {
+			total = Integer.valueOf(token.image);
+		} 
+		catch (NumberFormatException ee) 
+		{
+			throw new Error("Number too large: "+token.image);
+		}
+		return new Integer(total);
+     }
+     
+       
+}
+
+String name():
+{
+}
+{
+ < NAME > { return token.image.toUpperCase(); }
+}  
+
+

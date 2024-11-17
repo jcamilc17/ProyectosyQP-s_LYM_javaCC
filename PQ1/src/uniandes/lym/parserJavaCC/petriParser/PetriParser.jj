@@ -1,0 +1,115 @@
+//
+//  Implements JavaCC parser for graph descriptions
+//
+
+options {
+  IGNORE_CASE = true;
+  STATIC = false;
+}
+PARSER_BEGIN(PetriParser)
+package uniandes.lym.parserJavaCC.petriParser;
+
+import java.util.*;
+
+public class PetriParser {
+    ArrayList<String> places = new ArrayList<String>();
+    
+    public boolean isPlaceDefined(String placeName) {
+        return places.contains(placeName);
+    }
+} 
+ 
+PARSER_END(PetriParser)
+
+SKIP :
+{
+    " " | "\r" | "\t" | "\n"
+}
+
+TOKEN : 
+{
+    < PN: "PetriNet"> | 
+    < END: "End" > |
+    < PLACES: "Places"> |
+    < TRANSITIONS: "Transitions">    
+}
+
+TOKEN :
+{
+     < #DIGIT: "0" | "1" | "2"| "3" | "4" | "5" |  "6" | "7" | "8" |"9" >
+|   < #LETTER: ["A"-"Z"] >
+|   < NAME: ( <LETTER> ( <LETTER > | < DIGIT >)* )>
+|   < NUMBER: ( < DIGIT >)+ >
+}
+
+void net():
+{}
+{
+    < PN> name() places() transitions() < END >   
+}
+
+void name():
+{
+    Token nameToken;
+}
+{
+    nameToken = < NAME >
+}
+
+void places():
+{
+    Token placesToken;
+}
+{
+    placesToken = <PLACES>
+    place() ("," place())* 
+}
+
+void place():
+{
+    Token nameToken, numberToken;
+}
+{
+    nameToken = <NAME>
+    {
+        places.add(nameToken.image);
+    }
+    [ "(" numberToken = <NUMBER> ")" ]   
+}
+
+void transitions():
+{
+    Token transitionsToken;
+}
+{
+    transitionsToken = <TRANSITIONS>
+    transition()(";" transition())* 
+}
+
+void transition():
+{
+    Token nameToken;
+}
+{
+    nameToken = <NAME>
+    "(" InputsOutputs() "," InputsOutputs() ")" 
+}
+
+void InputsOutputs() :
+{
+    Token nameToken, numberToken;
+}
+{
+    "{"
+    (nameToken = <NAME> {
+        if (!places.contains(nameToken.image)) {
+            throw new ParseException("Place '" + nameToken.image + "' is not defined in Places.");
+        }
+    } ["(" numberToken = <NUMBER>")"])* 
+    ("," nameToken = <NAME> {
+        if (!places.contains(nameToken.image)) {
+            throw new ParseException("Place '" + nameToken.image + "' is not defined in Places.");
+        }
+    } ["(" numberToken = <NUMBER>")"])* 
+    "}"
+}

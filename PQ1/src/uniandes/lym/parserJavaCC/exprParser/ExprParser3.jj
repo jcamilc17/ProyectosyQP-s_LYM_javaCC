@@ -1,0 +1,217 @@
+	/**
+ * JavaCC template file created by SF JavaCC plugin 1.5.17+ wizard for JavaCC 1.5.0+
+*/
+
+
+
+options {
+  IGNORE_CASE = true;
+  STATIC = false;
+}
+
+PARSER_BEGIN(ExprParser)
+package uniandes.lym.parserJavaCC.exprParser;
+import java.util.*;
+ 
+
+public class ExprParser
+{
+
+Map<String, Integer> mem = new HashMap<String, Integer>();
+
+
+
+}
+
+
+
+
+PARSER_END(ExprParser)
+
+SKIP :
+{
+  " "
+| "\r" 
+| "\t"
+| "\n"
+}
+
+
+
+
+TOKEN :
+{
+  <INT : (< DIGIT >)+ >
+|  < HEXA: "#"(< DIGIT >)+ >
+| < #DIGIT : [ "0"-"9" ] >
+| < #LETTER : [ "A"-"Z" ] >
+| < WRITE: "write" >
+| < SQR : "SQR" >
+| < END: "end" >
+| < VAR :  <LETTER > (< LETTER >| < DIGIT >)* >
+
+}
+int one_line() :
+{String pos= null;
+ int val;}
+{
+  
+
+
+  
+// reads assignments and write statements. Should end with "end"
+//  for example:
+//     x = 1;
+//     y = -x + 8;
+//     write x;
+//     write y;
+//    end
+//  ";" is part of the instruction or write statement
+
+
+
+      ( pos = variable() "="  val = exp() ";" { mem.put(pos,val); }
+      |
+      <WRITE>  pos =variable() ";"  {System.out.println(pos + " = "+mem.get(pos));} // used to print variable values
+    )*
+  < END >
+  
+  {
+    return 0;
+  }
+    
+}
+
+int exp() :
+{
+  int val=0, x=0;
+}
+{
+// Parses  E -> E + T
+//         E -> E - T
+//         E -> T
+//   in EBNF:  E -> T {+ T   | - T }
+  
+ val=term() ( "+"x=term() { val += x; }
+          | "-" x=term() { val -= x; }
+         )*
+{
+ return val;
+ }
+}
+int term() :
+{
+  int x=0, val=0;
+}
+{
+// Parses  T -> T * F
+//         T -> T / F
+//         T -> F
+//   in EBNF:  T -> F {* F   | /  F }
+  
+ val=fact() ( "*"  x=fact() { val *= x; }    
+ | "/" fact() { val /= x; }
+  )*
+  {
+    return val; }
+}
+
+
+int fact() :
+{
+// Parses  F -> B
+//         F -> -F
+//         B -> num
+//         B -> '(' E ')'
+//         B -> var
+//   in EBNF:  F -> -F  |  (var |num |'(' E ')')
+//   we don't remove right recursion
+
+
+int  v;
+String pos;
+ 
+}
+{
+
+   "-"  v = fact() {  return -v; } 
+   |  pos=variable() { if (mem.get(pos)==null) return 0; else return mem.get(pos) ; }
+   | v=num() { return v; }
+   |  "("v= exp() ")" { return v; }
+   | < SQR >    "("v= exp() ")" { return v*v; }                       
+}
+
+
+int num() throws Error:
+{	
+	int total=-9999;
+	Token token;
+}
+
+{
+	(token=<INT>)
+
+	{ 
+		try {
+			total = Integer.valueOf(token.image);
+		} 
+		catch (NumberFormatException ee) 
+		{
+			throw new Error("Number too large: "+token.image);
+		}
+		return total;
+     }
+     
+       
+}
+
+
+String variable() throws Error:
+{	
+	int pos,total=1;
+	Token token;
+}
+
+
+{
+	(token=<VAR>)
+
+	  
+{
+  return token.image;
+}   
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

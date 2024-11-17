@@ -1,0 +1,423 @@
+	/**
+ * JavaCC template file created by SF JavaCC plugin 1.5.17+ wizard for JavaCC 1.5.0+
+*/
+
+
+options {
+  IGNORE_CASE = true;
+  STATIC = false;
+}
+
+PARSER_BEGIN(ExprParser)
+package uniandes.lym.parserJavaCC.exprParser;
+import java.util.*;
+ 
+
+public class ExprParser
+{
+
+Map<String, Integer> mem = new HashMap<String, Integer>(); //Memory to store variables.  
+
+
+
+private final int ASG = 0;
+private final int PUSH = 1;
+private final int PLUS = 2;
+private final int TIMES = 3;
+private final int DIV = 4;
+private final int SUB = 5;
+private final int WR = 6;
+private final int CHS = 7;
+private final int GET = 8;
+private final int IFi = 9;
+private final int SQRi = 10;
+private final int WHILEi = 11;
+
+private final String []
+names =
+{"ASG",
+"PUSH", "PLUS", "TIMES", "DIV", "SUB", "WRITE",
+"CHS", "GET","IF","SQR","WHILE","12","13","14"};
+
+
+static MyStack myStack = new MyStack();
+
+ArrayList <Instruction> code = new ArrayList <Instruction> () ;
+ArrayList <Instruction> tempCode = new ArrayList <Instruction> () ;
+ArrayList <Instruction> code1 = new ArrayList <Instruction> () ;
+ArrayList <Instruction> code2 = new ArrayList <Instruction> () ;
+ArrayList <Instruction> code3 = new ArrayList <Instruction> () ;
+
+private class Instruction {
+
+int type;
+Object arg = null;
+Object arg1 = null;
+Object arg2 = null;
+public Instruction(int t) {
+  type = t;
+  arg=null;
+  arg1 = null;
+  arg2 = null;
+}
+
+public Instruction(int t, Object a) {
+  type = t;
+  arg =  a;
+  arg1 = null;
+  arg2 = null;
+}
+
+public Instruction(int t, Object a, Object a1, Object a2) {
+  type = t;
+  arg =  a;
+  arg1 = a1;
+  arg2 = a2;
+  
+}
+
+public Instruction(int t, Object a, Object a1) {
+  type = t;
+  arg =  a;
+  arg1 = a1;
+   arg2 = null;
+}
+
+public void execute() throws Error {
+ int x;
+  switch (type) {
+  	case PUSH:   myStack.push(arg) ; break;
+  	case PLUS:   myStack.plus() ; break;
+	case TIMES:  myStack.times() ; break;
+	case DIV:   myStack.div() ; break;
+	case SUB:   myStack.minus() ; break;
+	case ASG:   mem.put((String) arg, myStack.pop()) ; break;
+	case GET:  if (mem.get((String) arg)==null)throw new Error("Undefined variable: "+ arg);
+               else myStack.push(mem.get((String) arg)) ; break;
+	case CHS:   myStack.chs() ; break;
+	case SQRi:  x=myStack.pop();  myStack.push(x*x); break;
+    case IFi:   IFins(arg,arg1,arg2); break;
+	case WHILEi:   WHILEins(arg,arg1); break;
+
+	case WR:    System.out.println("Output: "+ arg +"=" + mem.get(arg)); break;
+    default:    System.out.println("Unknown instruction "+  type); break;
+}
+}
+
+ 
+public String toString() {
+  if (arg==null)
+	return  "      "+names[type] + "\n";
+  else if (arg1== null && arg2==null)
+	return  "      "+ names[type] + "  "+  arg + "\n";
+  else if (arg2==null)
+	return  "      "+ names[type] + "  "+  arg + "  "+  arg1+"\n";
+  else 
+	return  "      "+ names[type] + "  "+  arg + "  "+  arg1+"  "+  arg2+"\n";
+
+}
+
+}
+
+void IFins(Object condition,
+                 Object ifCode,
+                  Object elseCode)
+ {
+
+                    
+  executeBlock((ArrayList <Instruction>)condition);
+  if (myStack.pop()==0)   executeBlock((ArrayList <Instruction>) ifCode);
+   else executeBlock((ArrayList <Instruction>) elseCode);
+  
+} 
+
+void WHILEins(Object condition,
+                 Object doCode)
+ {
+
+  int cond;                  
+  executeBlock((ArrayList <Instruction>) condition);
+cond = myStack.pop();
+while (cond ==0)
+   executeBlock((ArrayList <Instruction>) doCode);
+   executeBlock((ArrayList <Instruction>) condition);
+   cond = myStack.pop();
+} 
+  
+void executeBlock( ArrayList <Instruction> code)
+{
+ 
+		Iterator <Instruction > icode = code.iterator();
+		while (icode.hasNext()) {
+        	Instruction i = icode.next();
+        	 
+        	  i.execute();
+
+        	
+		} 
+}
+
+
+}
+
+
+PARSER_END(ExprParser)
+
+SKIP :
+{
+  " "
+| "\r" 
+| "\t"
+| "\n"
+}
+
+
+
+
+TOKEN :
+{
+  <INT : (< DIGIT >)+ >
+|  < HEXA: "#"(< DIGIT >)+ >
+| < #DIGIT : [ "0"-"9" ] >
+| < #LETTER : [ "A"-"Z" ] >
+| < WRITE: "write" >
+| < IF: "if" >
+| < THEN: "then" >
+| < ELSE: "else" >
+| < FI: "fi" >
+ | < WHILE: "while" >
+ | < DO: "do" >
+ | < OD: "od" >
+| < SQR: "sqr" >
+
+| < END: "end" >
+| < VAR :  <LETTER > (< LETTER >| < DIGIT >)* >
+}
+
+
+int one_line() :
+{String pos; int r=0;}
+
+
+{
+  
+
+  
+// reads assignments and write statements. Should end with "end"
+//  for example:
+//     x = 1;
+//     y = -x + 8;
+//     write x;
+//     write y;
+//    end
+//  ";" is part of the instruction or write statement
+
+      ( pos = variable()"=" exp() ";" {code.add(new Instruction(ASG,pos));}
+      |
+      <WRITE>  pos =variable() ";" // used to print variable values    {code.add(new Instruction(WR,pos));}
+  | <IF> { tempCode=code; code = new ArrayList <Instruction> () ; }
+     exp() { code1= code; code = new ArrayList <Instruction> () ; }
+    <THEN>  instructions()   { code2= code; code = new ArrayList <Instruction> () ; }
+    <ELSE> instructions() { code3= code; code = tempCode; }
+   < FI > ";" { code.add(new Instruction(IFi,code1,code2,code3)); }
+
+| <WHILE> { tempCode=code; code = new ArrayList <Instruction> () ; }
+     exp() { code1= code; code = new ArrayList <Instruction> () ; }
+    <DO>  instructions()
+      { code2= code; code = tempCode; }
+   < OD > ";" { code.add(new Instruction(WHILEi,code1,code2)); }
+
+
+    )*
+  "end"
+  
+      {
+        System.out.println("Executing:");
+ 
+        System.out.println(code);
+
+
+		Iterator <Instruction > icode = code.iterator();
+		while (icode.hasNext()) {
+        	Instruction i = icode.next();
+        	 
+        	  i.execute();
+
+        	
+		}
+        
+         
+      return 1; }
+    
+ 
+    
+}
+
+void instructions() :
+{String pos; int r=0;}
+
+{
+  
+
+  
+// reads assignments and write statements. Should end with "end"
+//  for example:
+//     x = 1;
+//     y = -x + 8;
+//     write x;
+//     write y;
+//    end
+//  ";" is part of the instruction or write statement
+
+  
+    ( pos = variable()"=" exp() ";" {code.add(new Instruction(ASG,pos));}
+      |
+      <WRITE>  pos =variable() ";" // used to print variable values
+    {code.add(new Instruction(WR,pos));}
+  | <IF> { tempCode=code; code = new ArrayList <Instruction> () ; }
+     exp() { code1= code; code = new ArrayList <Instruction> () ; }
+    <THEN>  instructions()   { code2= code; code = new ArrayList <Instruction> () ; }
+    <ELSE> instructions() { code3= code; code = tempCode; }
+   < FI > {code.add(new Instruction(IFi,code1,code2,code3)); }
+| <WHILE> { tempCode=code; code = new ArrayList <Instruction> () ; }
+     exp() { code1= code; code = new ArrayList <Instruction> () ; }
+    <DO>  instructions()   { code2= code; code = new ArrayList <Instruction> () ; }
+     < OD > {code.add(new Instruction(WHILEi,code1,code2)); }
+
+
+
+    )*
+  "end"
+  
+      
+ 
+    
+}
+void exp() :
+{
+  }
+{
+// Parses  E -> E + T
+//         E -> E - T
+//         E -> T
+//   in EBNF:  E -> T {+ T   | - T }
+  
+ term() ( "+"term() {code.add(new Instruction(PLUS)); }
+          | "-" term() {code.add(new Instruction(SUB)); }
+             )*
+}
+
+void term() :
+{
+}
+{
+// Parses  T -> T * F
+//         T -> T / F
+//         T -> F
+//   in EBNF:  T -> F {* F   | /  F }
+  
+ fact() ( "*"  fact()     {code.add(new Instruction(TIMES)); } 
+ | "/" fact()
+   {code.add(new Instruction(DIV)); }
+
+ )*
+}
+void fact() :
+{
+// Parses  F -> B
+//         F -> -F
+//         B -> num
+//         B -> '(' E ')'
+//         B -> var
+//   in EBNF:  F -> -F  |  (var |num |'(' E ')')
+//   we don't remove right recursion
+
+
+int  v;
+String pos;
+ 
+}
+{
+
+   "-"  fact() { code.add(new Instruction(CHS)); }
+   |  pos=variable() {code.add(new Instruction(GET,pos)); }
+   | v=num() {code.add(new Instruction(PUSH,v)); }
+   |  "("exp() ")"
+    |  < SQR > "("exp() ")"   { code.add(new Instruction(SQRi)); }                      
+}
+
+
+int num() throws Error:
+{	
+	int total=-9999;
+	Token token;
+}
+
+
+{
+	(token=<INT>)
+
+	{ 
+		try {
+			total = Integer.valueOf(token.image);
+		} 
+		catch (NumberFormatException ee) 
+		{
+			throw new Error("Number too large: "+token.image);
+		}
+		return total;
+     }
+     
+       
+}
+
+
+String variable() throws Error:
+{	
+	Token token;
+	String name;
+}
+
+{
+	(token=<VAR>)
+
+	  
+{
+   name = token.image;
+   return name.toUpperCase();
+  
+}   
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

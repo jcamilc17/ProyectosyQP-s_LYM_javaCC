@@ -1,0 +1,90 @@
+//
+//  Implements JavaCC parser for simple s-expressions (sums and products)
+//
+
+
+
+
+
+options {
+  IGNORE_CASE = true;
+  STATIC = false;
+}
+PARSER_BEGIN(S_ExpParser)
+package uniandes.lym.parserJavaCC.sExpParser;
+
+import java.util.*;
+ 
+public class S_ExpParser {
+} 
+ 
+PARSER_END(S_ExpParser)
+
+SKIP :
+{
+ 	" " | "\r" | "\t" | "\n"
+}
+ 
+
+TOKEN :
+{
+     < #DIGIT: "0" | "1" | "2"| "3" | "4" | "5" |  "6" | "7" | "8" |"9" >
+|   < #LETTER: ["A"-"Z"] >
+|    < NAME: ( <LETTER>  ( <LETTER > | < DIGIT >)* )>
+|    < NUM: (  < DIGIT >)+ >
+
+
+}
+
+
+
+
+void sExp():
+{int x; }
+{
+ x = sExp1()
+{
+  System.out.println("the result is " +x);
+}
+}
+
+int sExp1():
+{int x=0,y;}
+{
+(
+  x=num()
+|  "(" (  "+"  { x=0; } (y= sExp1() {x+= y; })* 
+      |   "*" { x=1; }  (y=sExp1() {x*= y; })*)
+	")"
+)
+{
+return x;
+}
+}
+
+
+int num() throws Error:
+{	
+	int total=-9999;
+	Token token;
+}
+
+
+{
+	(token=<NUM>)
+
+	{ 
+		try {
+			total = Integer.valueOf(token.image);
+		} 
+		catch (NumberFormatException ee) 
+		{
+			throw new Error("Number too large: "+token.image);
+		}
+		return total;
+     }
+     
+       
+}
+
+

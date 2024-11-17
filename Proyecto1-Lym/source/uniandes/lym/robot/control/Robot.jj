@@ -1,0 +1,817 @@
+/*
+Gramatica para el Robot:
+Autor: Alejandro Arango
+Modificado por: Silvia Takahashi
+Modificado por: Juan Pablo Morales.
+Agregadas producciones para manejar globos
+Modificado por Silvia Takahashi
+
+
+ **/
+
+/* Integrantes Proyecto 1:
+Felipe Sanmiguel:
+Juan Camilo Caldas: 202322445
+*/
+
+options 
+{
+  
+	LOOKAHEAD=1; 
+	IGNORE_CASE=true;
+	STATIC = false;
+	
+}
+   
+
+PARSER_BEGIN(Robot)
+
+package uniandes.lym.robot.control;
+
+import uniandes.lym.robot.kernel.*;
+import uniandes.lym.robot.view.Console;
+ 
+import java.awt.Point;
+import java.io.*;
+import java.util.Vector;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Arrays;
+import java.util.function.Supplier;
+
+
+@SuppressWarnings("serial")
+public class Robot 
+{
+
+
+	private RobotWorldDec world;
+	private HashMap<String, Integer> variables = new HashMap<String, Integer> ();
+	HashMap<String, Object[]> macros = new HashMap<>();
+
+	
+	
+	
+	void setWorld(RobotWorld w) {
+		world = (RobotWorldDec) w;	
+	}
+
+	String salida=new String();
+
+	private int size;
+	private int myX;
+	private int myY;
+	private int myChips;
+	private int myBalloons;
+	private int balloonsHere;
+	private int chipsHere;
+	private int roomForChips;
+	
+	void definicionConstantes() {
+	  	size = world.getN();
+		myX = (int)(world.getPosition()).getX();
+		myY = (int)(world.getPosition()).getY();
+		myChips = world.getMyChips();
+		myBalloons = world.getMyBalloons();
+		balloonsHere = world.countBalloons();
+		chipsHere = world.chipsToPick();
+		roomForChips = world.freeSpacesForChips();
+
+	}
+
+
+	int getAtribute(String s) {
+	  
+		if(s.equals("size")) {
+	    	return this.size;
+		}
+		else if(s.equals("myX")) {
+		  return this.myX;
+		}
+		else if(s.equals("myY")) {
+		  return this.myY;
+		}
+		else if(s.equals("myChips")) {
+		  return this.myChips;
+		}
+		else if(s.equals("myBalloons")) {
+		  return this.myBalloons;
+		}
+		else if(s.equals("ballonsHere")) {
+		  return this.balloonsHere;
+		}
+		else if(s.equals("chipsHere")) {
+		  return this.chipsHere;
+		}
+		else{
+		  return this.roomForChips;
+		}
+	}
+
+	void accionesMovesParam(String entrada) {
+	  
+		int orient = world.getFacing();
+		if ((entrada.toLowerCase()).equals("right")) {
+
+		  if (orient == 0) { 
+		  	world.right(); }
+		  else if (orient == 1) { 
+		  	world.left(); }
+		  else if (orient == 2) { 
+		  	world.down(); }
+		  else {
+		    world.up(); }
+		}
+		else if ((entrada.toLowerCase()).equals("forward")) {
+		  world.moveForward(1,false);}
+		  
+		else if ((entrada.toLowerCase()).equals("left")) {
+
+		  if (orient == 0) { 
+		  	world.left(); }
+		  else if (orient == 1) { 
+		  	world.right(); }
+		  else if (orient == 2) { 
+		  	world.up(); }
+		  else {
+		    world.down(); }
+		}
+
+		else if ((entrada.toLowerCase()).equals("backwards")) {
+		  world.moveForward(-1,false);}
+
+
+
+
+}
+	
+}
+
+	
+
+PARSER_END(Robot)
+
+SKIP:
+{
+	" "
+	|	"\r"
+	|	"\t"
+	| "\n"
+}
+
+TOKEN:
+{
+  < EXEC: "EXEC" >
+| < NEW: "NEW" >
+| < VAR: "VAR" >
+| < MACRO: "MACRO" >
+}
+
+
+
+TOKEN: /* Nuevos Comandos */
+{
+  < TURNTOMY: "turnToMy" >
+| < TURNTOTHE: "turnToThe" >
+| < WALK: "walk">
+| < JUMP: "jump" >
+| < DROP: "drop" >
+| < PICK_NEW: "pick" >
+| < GRAB: "grab" >
+| < LETGO: "letGo" >
+| < POP_NEW: "pop" >
+| < MOVES: "moves" >
+| < NOP: "nop" >
+| < SAFEEXE: "safeExe" >
+}
+
+TOKEN: /* Direcciones */
+{
+  < RIGHT: "right" >
+| < LEFT: "left" >
+| < BACK: "back">
+| < FRONT: "front" >
+}
+
+TOKEN: /* Direcciones Moves */
+{
+  < FORWARD: "forward" >
+| < BACKWARDS : "backwards">
+
+}
+
+TOKEN: /* Cardinalidades */
+{
+  < NORTH: "North">
+| < SOUTH: "South" >
+| < EAST: "East" >
+| < WEST: "West" >
+}
+
+TOKEN: /* values */
+{
+  < SIZE: "size" >
+| < MYX: "myX">
+| < MYY: "myY">
+| < MYCHIPS: "myChips" >
+| < MYBALLOONS: "myBalloons" >
+| < BALLOONSHERE: "balloonsHere" >
+| < CHIPSHERE: "chipsHere" >
+| < ROOMFORCHIPS: "roomForChips" >
+}
+
+TOKEN: /* Estructuras de Control*/
+{
+  < IF: "if">
+| < THEN: "then">
+| < ELSE: "else" >
+| < FI: "fi">
+| < DO: "do">
+| < OD: "od" >
+| < REPEAT: "repeat" >
+| < TIMES: "times" >
+| < PER: "per" >
+
+}
+
+TOKEN: /* Condiciones */
+{
+  <ISBLOCKED: "isBlocked?" >
+|< ISFACING: "isFacing?">
+| < ZERO: "zero?" >
+| < NOT: "not">
+  
+}
+
+TOKEN:
+{
+		< WORD: ( <LETTER>)* >
+		| < #LETTER: ["A"-"Z"] >
+}
+
+TOKEN:
+{
+		<BALLOONS:  "BALLOONS" >
+		|	<CHIPS:     "CHIPS"  >	
+
+}
+
+TOKEN :
+{
+		<NUM: (<DIGIT>)+ >
+		|  	<#DIGIT: ["0"-"9"] >
+        
+}
+
+TOKEN:
+{
+    < SEMI: ";" >
+}
+
+
+/* Programa Principal y Estructuras de Control*/
+
+	//boolean command(uniandes.lym.robot.view.Console sistema) :
+	boolean command(Console sistema):
+	{	
+		
+		String name;
+		int paramValue;
+	}
+
+	
+	{
+		(
+		  (< EXEC > ("{" (instruction() < SEMI >| controlStructure(sistema))* "}")
+	  | < NEW > (varDeclaration()|< MACRO>)
+	)
+		{
+		    try {
+	    			 Thread.sleep(900);
+	    	    } catch (InterruptedException e) {
+	    			        System.err.format("IOException: %s%n", e);
+	    		    }
+	    			 
+			sistema.printOutput(salida);
+			return true;
+		})+
+
+    	| <EOF> {return false;} 
+	}
+
+/* Instrucciones o comandos*/
+
+void instruction():
+{
+    int x = 0; 
+}
+{
+    (
+      < TURNTOMY > "(" ( 
+            < RIGHT > { world.turnRight(); salida = "Command: turnToMy(right)";}
+          | < LEFT > { world.turnRight(); world.turnRight(); world.turnRight(); salida = "Command: turnToMy(left)";}
+          | < BACK > { world.turnRight(); world.turnRight(); salida = "Command: turnToMy(back)";}
+        ) ")"
+        
+      | < TURNTOTHE > "(" ( 
+            < NORTH > { turnToNorth(); salida = "Command: turnToThe(North)";}
+          | < SOUTH > { turnToSouth(); salida = "Command: turnToThe(South)";}
+          | < EAST > { turnToEast(); salida = "Command: turnToThe(East)";}
+          | < WEST > { turnToWest(); salida = "Command: turnToThe(West)"; }
+        ) ")"
+      |
+      < WALK > "(" (x=num()| x = numConstVar()) ")" { world.moveForward(x, false); salida = "Command: Walk forward " + x; }
+      |
+      < JUMP > "(" (x=num()| x = numConstVar()) ")" { world.moveForward(x, true); salida = "Command: Jump forward " + x; }
+      |
+      < DROP > "(" (x=num()| x = numConstVar()) ")" { world.putChips(x); salida = "Command: Drop " + x + " chips"; }
+      |
+      < PICK_NEW > "(" (x=num()| x = numConstVar()) ")" { world.pickChips(x); salida = "Command: Pick " + x + " chips"; }
+      |
+      < GRAB > "(" (x=num()| x = numConstVar()) ")" { world.grabBalloons(x); salida = "Command: Grab " + x + " balloons"; }
+      |
+      < LETGO > "(" (x=num()| x = numConstVar()) ")" { world.putBalloons(x); salida = "Command: Let go " + x + " balloons"; }
+      |
+      < POP_NEW > "(" (x=num()| x = numConstVar()) ")" { world.popBalloons(x); salida = "Command: Pop " + x + " balloons"; }
+      |
+      < MOVES > "(" paramsmoves() ")" { salida = "Command: Moves"; }
+      |
+      < NOP > { salida = "Command: Nop"; }
+      |
+      < SAFEEXE > safeexecution() 
+      
+    )
+}
+
+void safeexecution():
+{
+	int x = 0;
+}
+{
+ 		"(" (< WALK > "(" (x=num()| x = numConstVar()) ")" { try {
+             world.moveForward(x, false);
+             salida = "Command: Walk forward " + x;
+         } catch (Error e) {
+             salida = "Error: " + e.getMessage();
+         } }
+      |
+      < JUMP > "(" (x=num()| x = numConstVar()) ")" { try {
+             world.moveForward(x, true);
+             salida = "Command: Jump forward " + x;
+         } catch (Error e) {
+             salida = "Error: " + e.getMessage();
+         } }
+      |
+      < DROP > "(" (x=num()| x = numConstVar()) ")" { try {
+             world.putChips(x);
+             salida = "Command: Drop " + x + " chips";
+         } catch (Error e) {
+             salida = "Error: " + e.getMessage();
+         } }
+      |
+      < PICK_NEW > "(" (x=num()| x = numConstVar()) ")" { try {
+             world.pickChips(x);
+             salida = "Command: Pick " + x + " chips";
+         } catch (Error e) {
+             salida = "Error: " + e.getMessage();
+         } }
+      |
+      < GRAB > "(" (x=num()| x = numConstVar()) ")" { try {
+             world.grabBalloons(x);
+             salida = "Command: Grab " + x + " balloons";
+         } catch (Error e) {
+             salida = "Error: " + e.getMessage();
+         } }
+      |
+      < LETGO > "(" (x=num()| x = numConstVar()) ")" { try {
+             world.putBalloons(x);
+             salida = "Command: Let go " + x + " balloons";
+         } catch (Error e) {
+             salida = "Error: " + e.getMessage();
+         } }
+      |
+      < POP_NEW > "(" (x=num()| x = numConstVar()) ")" { try {
+             world.popBalloons(x);
+             salida = "Command: Pop " + x + " balloons";
+         } catch (Error e) {
+             salida = "Error: " + e.getMessage();
+         } } ) ")"
+}
+
+void constantesTokens():
+	{}
+	{
+	  <SIZE>
+	|<MYX>
+	|<MYY>
+	|<MYCHIPS>
+	|<MYBALLOONS>
+	|<BALLOONSHERE>
+	|<CHIPSHERE>
+	|<ROOMFORCHIPS>
+	}
+
+void paramsmoves():
+{
+  String movimiento = "";
+}
+{
+  (< RIGHT > | < LEFT >|< FORWARD >|< BACKWARDS >) { movimiento = token.image; accionesMovesParam(movimiento);}
+  (","(< RIGHT > | < LEFT >|< FORWARD >|< BACKWARDS >) { movimiento = token.image; accionesMovesParam(movimiento);})*
+}
+
+void controlStructure(Console sistema) :
+{
+    int n;
+    String instructionToken;
+}
+{ (conditional(sistema))
+| (doWhileLoop(sistema))
+| (repeatTimes(sistema))
+}
+
+void conditional(Console sistema):
+{
+    StringBuilder bloq1 = new StringBuilder(); 
+    StringBuilder bloq2 = new StringBuilder();  
+}
+{
+    < IF > condition() < THEN > "{"
+
+        (
+            instruction() <SEMI> { bloq1.append(salida).append("\n"); }  
+        )+
+    "}"
+
+    [ < ELSE > "{"
+
+        (
+            instruction() <SEMI> { bloq2.append(salida).append("\n"); }  
+        )+
+    "}" ]
+    < FI >
+    {
+        if (condition()) {
+            sistema.printOutput("Executing IF block");
+            sistema.printOutput(bloq1.toString()); 
+        } else {
+            sistema.printOutput("Executing ELSE block");
+            sistema.printOutput(bloq2.toString()); 
+        }
+    }
+}
+
+void doWhileLoop(Console sistema):
+{
+    List<String> instructionBlock = new ArrayList<>();
+    boolean conditionResult;
+}
+{
+    < DO > 
+    {
+        conditionResult = condition();
+    }
+    "{"   
+    (
+        instruction() < SEMI > {
+            instructionBlock.add(salida); 
+        }
+    )*
+    "}" 
+    < OD > < SEMI >
+    
+    {
+        while (conditionResult) {
+            sistema.printOutput("Executing DO-OD loop iteration");
+
+            for (String instr : instructionBlock) {
+                sistema.printOutput(instr);
+            }
+
+            conditionResult = condition();
+        }
+    }
+}
+
+
+void repeatTimes(Console sistema):
+{
+    int x = 0;
+    List<String> instructionBlock = new ArrayList<>();
+}
+{
+    < REPEAT > x = num() < TIMES > "{" (instruction() < SEMI>)* "}"  < PER > < SEMI >
+    
+    {
+        if (x > 0) {
+            for (int i = 0; i < x; i++) {
+                sistema.printOutput("Repeating command block, iteration: " + (i + 1));
+                
+                for (int j = 0; j < x; j++) {
+                    instruction();  
+                }
+            }
+        } else {
+            sistema.printOutput("Error: Repeat count must be greater than 0");
+        }
+    }
+}
+
+
+/* Condicionales */
+
+boolean condition() :
+{
+	boolean result = false;
+}
+{
+    "("(      result = isBlockedCondition()
+    |result = isFacingCondition()
+    |result = zeroCondition()
+    |result = notCondition()) ")"
+    {
+		return result;
+    }
+}
+
+boolean isBlockedCondition() :
+{
+    boolean isBlockedCorrectly = false;
+    Point currentPos;
+    Point checkPos;
+}
+{
+    <ISBLOCKED> "("
+    (
+        <LEFT> { 
+            currentPos = world.getPosition(); 
+            checkPos = new Point(currentPos.x - 1, currentPos.y); 
+            if (world.isBlocked(checkPos)) { 
+                isBlockedCorrectly = true; 
+            }
+        }
+        | <RIGHT> { 
+            currentPos = world.getPosition(); 
+            checkPos = new Point(currentPos.x + 1, currentPos.y); 
+            if (world.isBlocked(checkPos)) { 
+                isBlockedCorrectly = true; 
+            }
+        }
+        | <BACK> { 
+            currentPos = world.getPosition(); 
+            checkPos = new Point(currentPos.x, currentPos.y + 1); 
+            if (world.isBlocked(checkPos)) { 
+                isBlockedCorrectly = true; 
+            }
+        }
+        | <FRONT> { 
+            currentPos = world.getPosition(); 
+            checkPos = new Point(currentPos.x, currentPos.y - 1); 
+            if (world.isBlocked(checkPos)) { 
+                isBlockedCorrectly = true; 
+            }
+        }
+    ) ")"
+    {
+		return isBlockedCorrectly;
+    }
+}
+
+
+
+boolean isFacingCondition() :
+{
+	boolean isFacingCorrectly = false;
+	int facing;
+}
+{
+    <ISFACING> "(" <NORTH> {facing = world.getFacing(); 
+    if (facing == 0) {isFacingCorrectly = true;};}
+    | <SOUTH> {facing = world.getFacing(); 
+    if (facing == 1) {isFacingCorrectly = true;};}
+    | <EAST> {facing = world.getFacing(); 
+    if (facing == 2) {isFacingCorrectly = true;};}
+    | <WEST> {facing = world.getFacing(); 
+    if (facing == 3) {isFacingCorrectly = true;};} ")"
+    {
+		return isFacingCorrectly;
+    }
+}
+
+boolean zeroCondition() :
+{
+    int number;
+}
+{
+    <ZERO> "(" number = num() ")" 
+    {
+        return number == 0; 
+    }
+}
+
+
+
+boolean notCondition() :
+{}
+{
+    <NOT> "(" { return !condition(); } ")"
+}
+
+
+/* Metodos turnToThe (Cardinalidades)*/
+
+void turnToNorth():
+{
+  int facing;
+}
+{
+  {
+  	facing = world.getFacing(); 
+    if (facing == 0) {
+        salida = "Already facing North";
+    } else if (facing == 1) {
+        world.turnRight();
+        world.turnRight();
+        salida = "Turned to face North";
+    } else if (facing == 2) {
+        world.turnRight();
+        world.turnRight();
+        world.turnRight();
+        salida = "Turned to face North";
+    } else if (facing == 3) {
+        world.turnRight();
+        salida = "Turned to face North";
+    }
+  }
+}
+
+void turnToSouth():
+{
+  int facing;
+}
+{
+  {
+    facing = world.getFacing();
+    if (facing == 1) {
+        salida = "Already facing South";
+    } else if (facing == 0) {
+        world.turnRight();
+        world.turnRight();
+        salida = "Turned to face South";
+    } else if (facing == 2) {
+        world.turnRight();
+        salida = "Turned to face South";
+    } else if (facing == 3) {
+        world.turnRight();
+        world.turnRight();
+        world.turnRight();
+        salida = "Turned to face South";
+    }
+  }
+}
+
+void turnToEast():
+{
+  int facing;
+}
+{
+  {
+    facing = world.getFacing();
+    if (facing == 2) {
+        salida = "Already facing East";
+    } else if (facing == 3) {
+        world.turnRight();
+        world.turnRight();
+        salida = "Turned to face East";
+    } else if (facing == 0) {
+        world.turnRight();
+        salida = "Turned to face East";
+    } else if (facing == 1) {
+        world.turnRight();
+        world.turnRight();
+        world.turnRight();
+        salida = "Turned to face East";
+    }
+  }
+}
+
+void turnToWest():
+{
+  int facing;
+}
+{
+  {
+    facing = world.getFacing();
+    if (facing == 3) {
+        salida = "Already facing West";
+    } else if (facing == 2) {
+        world.turnRight();
+        world.turnRight();
+        salida = "Turned to face West";
+    } else if (facing == 0) {
+        world.turnRight();
+        world.turnRight();
+        world.turnRight();
+        salida = "Turned to face West";
+    } else if (facing == 1) {
+        world.turnRight();
+        salida = "Turned to face West";
+    }
+  }
+}
+
+
+/* Metodos put y get*/
+
+	void put() :
+	{
+		int f=1;	
+	}
+	{
+		( <CHIPS>    "," f=num() {world.putChips(f); salida = "Command:  Put Chips"; })
+		|  	  ( <BALLOONS>   "," f=num() {world.putBalloons(f); salida = "Command:  Put Balloons";})	 
+
+	}
+
+	void get() :
+	{
+		int f=1;	
+	}
+	{
+		( <CHIPS>   "," f=num() {world.pickChips(f);salida = "Command:  Pick chips";})
+		|  	  ( <BALLOONS>   "," f=num() {world.grabBalloons(f);salida="Command:  Pick balloons";})	 
+
+	}
+
+
+void varDeclaration():
+	{ String llave = "";
+	  int valor = 0;}
+	{
+	<VAR> <WORD > {llave = token.image;} "=" <NUM> {valor = Integer.parseInt(token.image); variables.put(llave,valor);}
+	}
+
+
+	/**
+	 * Unsigned decimal number
+	 * @return the corresponding value of the string
+	 * @error  corresponding value is too large
+	 */
+
+String name():
+{
+    Token nameToken;
+}
+{
+    nameToken = <WORD> { return nameToken.image; }
+}
+
+
+
+	int num() throws Error:
+	{	
+		int total=1;
+	}
+	{
+		<NUM>
+		{
+			try 
+			{
+				total = Integer.parseInt(token.image);
+			} 
+			catch (NumberFormatException ee) 
+			{
+				throw new Error("Number out of bounds: "+token.image+" !!");
+			}
+			return total;
+		}
+	}
+
+	int numConstVar():
+	{
+		int totalConstVar = 0;
+	}
+	{
+	  		constantesTokens() {
+	    	totalConstVar = getAtribute(token.image);
+			return totalConstVar;}
+
+		|
+			<WORD> {
+			  			try
+			  			{
+			  			  totalConstVar = variables.get(token.image);
+			  			}
+						catch (NullPointerException e)
+						{
+						  throw new Error("No existe variable: "+token.image+" !!");
+						}
+			  			return totalConstVar;
+			  		}
+	}
+
+
+	

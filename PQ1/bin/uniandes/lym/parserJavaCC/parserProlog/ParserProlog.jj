@@ -1,0 +1,170 @@
+/**
+ * JavaCC file
+ */
+ 
+options {
+  IGNORE_CASE = false;
+  STATIC = false;
+}
+PARSER_BEGIN(ParserProlog)
+package uniandes.lym.parserJavaCC.parserProlog;
+
+
+import java.util.*;
+
+public class ParserProlog {
+
+  
+
+}
+
+
+PARSER_END(ParserProlog)
+
+SKIP :
+{
+ 	" " | "\r" | "\t" | "\n"
+}
+TOKEN : /* OPERATORS */
+{
+    <ARROW: ":-">
+}
+TOKEN: {
+   <#CH: ~["\""] >//any character except quote
+|  <QUOTED: "\""  ( < CH > )* "\"" >
+}
+
+ 
+TOKEN : // numbers, atoms and variables
+{
+    < INT: ( <DIGIT> )+ >
+|   < #DIGIT: "0" | "1" | "2"| "3" | "4" | "5" |  "6" | "7" | "8" |"9" >
+|   < #UPPER: ["A"-"Z"] >
+|   < #LOWER: ["a"-"z"] >
+|   < VAR: ( <UPPER>  ( <UPPER > | < LOWER > | < DIGIT > )* )>
+|   < ATOM: ( <LOWER>  ( <UPPER > | < LOWER > | < DIGIT >)* )>
+}
+
+
+
+void hr():
+{}
+{
+  
+  functor() [< ARROW>  functor() (","  functor())*] "."
+
+
+}
+
+
+void functor(): 
+{}
+{
+(
+  	< ATOM > ("(" arg() (","  arg())* ")")?
+)
+	
+}
+void arg():
+{}
+{
+  < INT > | functor() | list() | < VAR > | < QUOTED >
+}
+
+void list() :
+{}
+
+{
+
+"[" [arg() (","  arg())* ["|" arg()]] "]"}
+
+
+
+
+
+void exp() :
+{
+  }
+{
+// Parses  E -> E + T
+//         E -> E - T
+//         E -> T
+//   in EBNF:  E -> T {+ T   | - T }
+  
+ term() ( "+"term() 
+          | "-" term()  
+         )*
+}
+void term() :
+{
+}
+{
+// Parses  T -> T * F
+//         T -> T / F
+//         T -> F
+//   in EBNF:  T -> F {* F   | /  F }
+  
+ fact() ( "*"  fact()
+ 
+   
+ | "/" fact()
+  
+
+ )*
+}
+void fact() :
+{
+// Parses  F -> B
+//         F -> -F
+//         B -> num
+//         B -> '(' E ')'
+//         B -> var
+//   in EBNF:  F -> -F  |  (var |num |'(' E ')')
+//   we don't remove right recursion
+
+
+int  v,pos;
+ 
+}
+{
+
+   "-"  fact() 
+   |  variable() 
+   | num() 
+   |  "("exp() ")"
+                             
+}
+
+
+void num() :
+{	
+	
+}
+
+{
+	(token=<INT>)
+
+	
+}
+
+
+void variable() throws Error:
+{	
+	int pos,total=1;
+	Token token;
+}
+
+{
+	(token=<VAR>)
+
+}
+
+
+
+
+
+
+
+
+
+  

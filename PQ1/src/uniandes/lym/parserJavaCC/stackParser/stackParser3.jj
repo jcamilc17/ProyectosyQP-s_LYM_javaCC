@@ -1,0 +1,163 @@
+	/**
+ * JavaCC template file created by SF JavaCC plugin 1.5.17+ wizard for JavaCC 1.5.0+
+*/
+
+
+
+options {
+  IGNORE_CASE = true;
+  STATIC = false;
+}
+
+PARSER_BEGIN(stackParser)
+package uniandes.lym.parserJavaCC.stackParser;
+import java.util.*;
+ 
+
+public class stackParser
+{
+
+Map<String, Integer> mem = new HashMap<String, Integer>();
+
+
+
+}
+
+
+
+
+PARSER_END(stackParser)
+
+SKIP :
+{
+  " "
+| "\r" 
+| "\t"
+}
+
+
+
+
+TOKEN :
+{
+  <INT : (< DIGIT >)+ >
+|  < HEXA: "#"(< DIGIT >)+ >
+| < #DIGIT : [ "0"-"9" ] >
+| < #LETTER : [ "A"-"Z" ] >
+| < WRITE: "write" >
+| < PLUS : "PLUS" >
+| < PUSH: "PUSH" >
+| < TIMES: "TIMES" >
+| < ASG: "ASG" >
+|  < END: "END" >
+| < VAR :  <LETTER > (< LETTER >| < DIGIT >)* >
+
+}
+int one_line() :
+{String pos= null;
+ int val;}
+{
+  
+((
+< WRITE > pos = variable()
+| < PLUS >
+|  < ASG > pos = variable()
+|  < TIMES >
+|  < PUSH > val=num()
+) "\n" )*
+< END >  "\n"
+
+
+  
+
+
+/*
+      ( pos = variable() "="  val = exp() ";" { mem.put(pos,val); }
+      |
+      <WRITE>  pos =variable() ";"  {System.out.println(pos + " = "+mem.get(pos));} // used to print variable values
+    )*
+  < END >
+ */
+
+ 
+  {
+    return 0;
+  }
+    
+}
+
+
+
+int num() throws Error:
+{	
+	int total=-9999;
+	Token token;
+}
+
+{
+	(token=<INT>)
+
+	{ 
+		try {
+			total = Integer.valueOf(token.image);
+		} 
+		catch (NumberFormatException ee) 
+		{
+			throw new Error("Number too large: "+token.image);
+		}
+		return total;
+     }
+     
+       
+}
+
+
+String variable() throws Error:
+{	
+	int pos,total=1;
+	Token token;
+}
+
+
+{
+	(token=<VAR>)
+
+	  
+{
+  return token.image;
+}   
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
